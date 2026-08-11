@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Seeding">
+<meta name="theme-color" content="#0E141A">
+<title>Seeding — 분주 용액 계산</title>
+<link rel="apple-touch-icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 180 180'%3E%3Crect width='180' height='180' fill='%230E141A'/%3E%3Crect x='62' y='28' width='56' height='124' rx='10' fill='none' stroke='%232B3742' stroke-width='7'/%3E%3Crect x='69' y='96' width='42' height='49' rx='5' fill='%23F0637E'/%3E%3Crect x='69' y='118' width='42' height='27' rx='5' fill='%2345C8DE'/%3E%3C/svg%3E">
+<style>
+  :root{
+    --bg:#0E141A;
+    --panel:#161E26;
+    --panel-2:#1C262F;
+    --line:#2B3742;
+    --line-soft:#222D37;
+    --ink:#E9F0F6;
+    --ink-dim:#8A9AA8;
+    --ink-faint:#5F6E7B;
+    --cyan:#45C8DE;
+    --phenol:#F0637E;
+    --amber:#F2A93B;
+    --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
+    --sans: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Segoe UI", system-ui, sans-serif;
+  }
+  *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+  html,body{margin:0;padding:0}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:var(--sans);
+    font-size:16px;
+    line-height:1.45;
+    padding:
+      calc(env(safe-area-inset-top) + 22px)
+      calc(env(safe-area-inset-right) + 18px)
+      calc(env(safe-area-inset-bottom) + 48px)
+      calc(env(safe-area-inset-left) + 18px);
+    max-width:560px;
+    margin:0 auto;
+  }
+
+  /* ---------- header ---------- */
+  .eyebrow{
+    font-family:var(--mono);
+    font-size:11px;
+    letter-spacing:.18em;
+    text-transform:uppercase;
+    color:var(--ink-faint);
+    margin:0 0 6px;
+  }
+  h1{
+    font-size:23px;
+    font-weight:650;
+    letter-spacing:-.01em;
+    margin:0 0 26px;
+  }
+
+  /* ---------- cards ---------- */
+  .card{
+    background:var(--panel);
+    border:1px solid var(--line-soft);
+    border-radius:14px;
+    padding:16px 15px 17px;
+    margin-bottom:14px;
+  }
+  .card-head{
+    display:flex;
+    align-items:baseline;
+    gap:9px;
+    margin-bottom:14px;
+  }
+  .step{
+    font-family:var(--mono);
+    font-size:11px;
+    color:var(--bg);
+    background:var(--ink-faint);
+    border-radius:4px;
+    padding:2px 6px;
+    letter-spacing:.04em;
+  }
+  .card-title{font-size:15px;font-weight:600;letter-spacing:-.005em}
+
+  .lbl{
+    display:block;
+    font-family:var(--mono);
+    font-size:10.5px;
+    letter-spacing:.11em;
+    text-transform:uppercase;
+    color:var(--ink-dim);
+    margin-bottom:6px;
+  }
+
+  /* ---------- inputs ---------- */
+  .field{position:relative}
+  input[type=text]{
+    width:100%;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:9px;
+    color:var(--ink);
+    font-family:var(--mono);
+    font-size:17px;
+    padding:11px 46px 11px 12px;
+    outline:none;
+    transition:border-color .12s ease;
+  }
+  input[type=text]:focus{border-color:var(--cyan)}
+  input[type=text]:focus-visible{outline:2px solid var(--cyan);outline-offset:1px}
+  .unit{
+    position:absolute;
+    right:12px;
+    top:50%;
+    transform:translateY(-50%);
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--ink-faint);
+    pointer-events:none;
+  }
+  .row{display:grid;gap:11px}
+  .row.two{grid-template-columns:1fr 1fr}
+  .row.three{grid-template-columns:1fr 1fr 1fr}
+
+  /* ---------- segmented ---------- */
+  .seg{
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:4px;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:9px;
+    padding:4px;
+  }
+  .seg button{
+    appearance:none;
+    background:transparent;
+    border:0;
+    border-radius:6px;
+    color:var(--ink-dim);
+    font-family:var(--sans);
+    font-size:14px;
+    font-weight:500;
+    padding:8px 4px;
+    cursor:pointer;
+    transition:background .12s ease, color .12s ease;
+  }
+  .seg button[aria-pressed=true]{
+    background:var(--line);
+    color:var(--ink);
+  }
+  .seg button:focus-visible{outline:2px solid var(--cyan);outline-offset:1px}
+
+  /* ---------- stepper ---------- */
+  .stepper{
+    display:grid;
+    grid-template-columns:44px 1fr 44px;
+    align-items:center;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+    border-radius:9px;
+    overflow:hidden;
+  }
+  .stepper button{
+    appearance:none;background:transparent;border:0;
+    color:var(--ink-dim);font-size:21px;line-height:1;
+    padding:11px 0;cursor:pointer;
+  }
+  .stepper button:active{background:var(--line)}
+  .stepper button:focus-visible{outline:2px solid var(--cyan);outline-offset:-2px}
+  .stepper input{
+    border:0;background:transparent;text-align:center;
+    padding:11px 0;border-radius:0;
+  }
+  .stepper input:focus{border-color:transparent}
+
+  .hint{
+    font-family:var(--mono);
+    font-size:11.5px;
+    color:var(--ink-faint);
+    margin-top:7px;
+  }
+  .hint b{color:var(--cyan);font-weight:500}
+
+  .prefs{
+    margin-top:14px;
+    padding-top:14px;
+    border-top:1px solid var(--line-soft);
+  }
+
+  /* ---------- readout ---------- */
+  .readout{
+    background:var(--panel);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:18px 15px 16px;
+    margin-top:20px;
+  }
+  .out{
+    display:flex;
+    align-items:baseline;
+    justify-content:space-between;
+    gap:12px;
+    padding:9px 0;
+  }
+  .out + .out{border-top:1px solid var(--line-soft)}
+  .out-name{display:flex;align-items:center;gap:8px;font-size:14px;color:var(--ink-dim)}
+  .swatch{width:9px;height:9px;border-radius:2px;flex:none}
+  .sw-cell{background:var(--cyan)}
+  .sw-media{background:var(--phenol)}
+  .out-val{
+    font-family:var(--mono);
+    font-size:27px;
+    font-weight:500;
+    letter-spacing:-.02em;
+    font-variant-numeric:tabular-nums;
+  }
+  .out-val .u{font-size:12px;color:var(--ink-faint);margin-left:4px;letter-spacing:0}
+
+  /* ---------- signature: volume bar ---------- */
+  .vessel{margin:16px 0 4px}
+  .bar{
+    display:flex;
+    height:34px;
+    border-radius:6px;
+    overflow:hidden;
+    background:var(--panel-2);
+    border:1px solid var(--line);
+  }
+  .bar span{display:block;height:100%;transition:width .25s cubic-bezier(.4,0,.2,1)}
+  .bar .b-cell{background:var(--cyan)}
+  .bar .b-media{background:var(--phenol);opacity:.85}
+  .ticks{
+    display:flex;
+    justify-content:space-between;
+    font-family:var(--mono);
+    font-size:10px;
+    color:var(--ink-faint);
+    margin-top:6px;
+  }
+
+  .total{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    margin-top:14px;
+    padding-top:13px;
+    border-top:1px solid var(--line);
+    font-family:var(--mono);
+    font-size:12px;
+    color:var(--ink-dim);
+  }
+  .total b{color:var(--ink);font-size:15px;font-weight:500}
+
+  .note{
+    font-family:var(--mono);
+    font-size:11.5px;
+    color:var(--ink-faint);
+    line-height:1.75;
+    margin-top:12px;
+  }
+
+  .warn{
+    display:none;
+    border-radius:9px;
+    padding:11px 12px;
+    font-size:13px;
+    line-height:1.5;
+    margin-top:13px;
+    background:rgba(242,169,59,.1);
+    border:1px solid rgba(242,169,59,.35);
+    color:var(--amber);
+  }
+  .warn.on{display:block}
+  .warn.stop{
+    background:rgba(240,99,126,.1);
+    border-color:rgba(240,99,126,.4);
+    color:var(--phenol);
+  }
+
+  .empty{
+    text-align:center;
+    color:var(--ink-faint);
+    font-size:13.5px;
+    padding:26px 10px;
+  }
+  .hidden{display:none}
+
+  footer{
+    font-family:var(--mono);
+    font-size:10.5px;
+    color:var(--ink-faint);
+    text-align:center;
+    margin-top:26px;
+    letter-spacing:.04em;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    *{transition:none !important}
+  }
+</style>
+</head>
+<body>
+
+<p class="eyebrow">Cell seeding</p>
+<h1>분주 용액 계산</h1>
+
+<!-- ① 현탁액 -->
+<section class="card">
+  <div class="card-head"><span class="step">1</span><span class="card-title">세포 현탁액</span></div>
+
+  <div class="seg" style="margin-bottom:13px">
+    <button type="button" id="mode-a" aria-pressed="true">부피 + 세포수</button>
+    <button type="button" id="mode-b" aria-pressed="false">농도 직접 입력</button>
+  </div>
+
+  <div id="pane-a" class="row two">
+    <div>
+      <label class="lbl" for="i-vol">부피</label>
+      <div class="field">
+        <input type="text" id="i-vol" inputmode="decimal" autocomplete="off" value="4">
+        <span class="unit">mL</span>
+      </div>
+    </div>
+    <div>
+      <label class="lbl" for="i-count">세포수</label>
+      <div class="field">
+        <input type="text" id="i-count" autocomplete="off" autocapitalize="off" spellcheck="false" value="1E6">
+        <span class="unit">cells</span>
+      </div>
+    </div>
+  </div>
+
+  <div id="pane-b" class="hidden">
+    <label class="lbl" for="i-conc">농도</label>
+    <div class="field">
+      <input type="text" id="i-conc" autocomplete="off" autocapitalize="off" spellcheck="false" value="2.5E5">
+      <span class="unit">cells/mL</span>
+    </div>
+  </div>
+
+  <p class="hint" id="h-conc">현탁액 농도 <b>—</b></p>
+</section>
+
+<!-- ② 용기 -->
+<section class="card">
+  <div class="card-head"><span class="step">2</span><span class="card-title">용기</span></div>
+
+  <div class="seg" style="margin-bottom:13px">
+    <button type="button" id="v-flask" aria-pressed="true">T-flask</button>
+    <button type="button" id="v-mylar" aria-pressed="false">Mylar dish</button>
+  </div>
+
+  <label class="lbl" for="i-n">개수</label>
+  <div class="stepper">
+    <button type="button" id="n-minus" aria-label="개수 줄이기">−</button>
+    <input type="text" id="i-n" inputmode="numeric" autocomplete="off" value="2">
+    <button type="button" id="n-plus" aria-label="개수 늘리기">+</button>
+  </div>
+
+  <div class="prefs row three">
+    <div>
+      <label class="lbl" for="i-per">용기당</label>
+      <div class="field"><input type="text" id="i-per" inputmode="decimal" autocomplete="off" value="7.2"><span class="unit">mL</span></div>
+    </div>
+    <div>
+      <label class="lbl" for="i-dens">목표 밀도</label>
+      <div class="field"><input type="text" id="i-dens" autocomplete="off" autocapitalize="off" spellcheck="false" value="2.5E4"></div>
+    </div>
+    <div>
+      <label class="lbl" for="i-sf">여유 배수</label>
+      <div class="field"><input type="text" id="i-sf" inputmode="decimal" autocomplete="off" value="1.2"><span class="unit">×</span></div>
+    </div>
+  </div>
+  <p class="hint" id="h-vessel">—</p>
+</section>
+
+<!-- 결과 -->
+<section class="readout">
+  <div id="r-empty" class="empty">숫자를 입력하면 여기에 결과가 나옵니다.</div>
+
+  <div id="r-body" class="hidden">
+    <div class="out">
+      <span class="out-name"><i class="swatch sw-cell"></i>세포 현탁액</span>
+      <span class="out-val" id="o-cell">—<span class="u">mL</span></span>
+    </div>
+    <div class="out">
+      <span class="out-name"><i class="swatch sw-media"></i>배지</span>
+      <span class="out-val" id="o-media">—<span class="u">mL</span></span>
+    </div>
+
+    <div class="vessel">
+      <div class="bar">
+        <span class="b-cell" id="bar-cell" style="width:0%"></span>
+        <span class="b-media" id="bar-media" style="width:100%"></span>
+      </div>
+      <div class="ticks"><span>0</span><span id="tick-mid">—</span><span id="tick-end">—</span></div>
+    </div>
+
+    <div class="total">
+      <span>총 분주 용액</span>
+      <b id="o-total">— mL</b>
+    </div>
+
+    <p class="note" id="o-note"></p>
+    <div class="warn" id="o-warn"></div>
+  </div>
+</section>
+
+<footer>홈 화면에 추가해서 쓰세요</footer>
+
+<script>
+(function(){
+  "use strict";
+
+  var PRESET = {
+    flask: { per: "7.2",  dens: "2.5E4", label: "T-flask" },
+    mylar: { per: "2",    dens: "1.75E5", label: "Mylar dish" }
+  };
+
+  var mode = "a";      // a = 부피+세포수, b = 농도
+  var vessel = "flask";
+
+  var $ = function(id){ return document.getElementById(id); };
+
+  function num(el){
+    var raw = (el.value || "").trim().replace(/,/g, "").replace(/\s+/g, "");
+    if (!raw) return NaN;
+    var v = parseFloat(raw);
+    return isFinite(v) ? v : NaN;
+  }
+
+  var SUP = { "0":"⁰","1":"¹","2":"²","3":"³","4":"⁴","5":"⁵","6":"⁶","7":"⁷","8":"⁸","9":"⁹","-":"⁻" };
+  function sci(x){
+    if (!isFinite(x) || x <= 0) return "—";
+    var e = Math.floor(Math.log10(x));
+    var m = x / Math.pow(10, e);
+    if (m >= 9.995){ m = m/10; e += 1; }
+    var exp = String(e).split("").map(function(c){ return SUP[c] || c; }).join("");
+    return m.toFixed(2) + "×10" + exp;
+  }
+  function vol(x){
+    if (!isFinite(x)) return "—";
+    if (Math.abs(x) >= 100) return x.toFixed(1);
+    if (Math.abs(x) >= 10)  return x.toFixed(2);
+    return x.toFixed(3);
+  }
+
+  function setPressed(onEl, offEl){
+    onEl.setAttribute("aria-pressed","true");
+    offEl.setAttribute("aria-pressed","false");
+  }
+
+  // --- 입력 모드 ---
+  $("mode-a").addEventListener("click", function(){
+    mode = "a";
+    setPressed($("mode-a"), $("mode-b"));
+    $("pane-a").classList.remove("hidden");
+    $("pane-b").classList.add("hidden");
+    render();
+  });
+  $("mode-b").addEventListener("click", function(){
+    mode = "b";
+    setPressed($("mode-b"), $("mode-a"));
+    $("pane-b").classList.remove("hidden");
+    $("pane-a").classList.add("hidden");
+    render();
+  });
+
+  // --- 용기 ---
+  function pickVessel(kind){
+    vessel = kind;
+    if (kind === "flask") setPressed($("v-flask"), $("v-mylar"));
+    else setPressed($("v-mylar"), $("v-flask"));
+    $("i-per").value  = PRESET[kind].per;
+    $("i-dens").value = PRESET[kind].dens;
+    render();
+  }
+  $("v-flask").addEventListener("click", function(){ pickVessel("flask"); });
+  $("v-mylar").addEventListener("click", function(){ pickVessel("mylar"); });
+
+  // --- 개수 스테퍼 ---
+  function bump(d){
+    var n = parseInt($("i-n").value, 10);
+    if (!isFinite(n)) n = 1;
+    n = Math.max(1, Math.min(999, n + d));
+    $("i-n").value = String(n);
+    render();
+  }
+  $("n-minus").addEventListener("click", function(){ bump(-1); });
+  $("n-plus").addEventListener("click", function(){ bump(1); });
+
+  var inputs = ["i-vol","i-count","i-conc","i-n","i-per","i-dens","i-sf"];
+  inputs.forEach(function(id){
+    $(id).addEventListener("input", render);
+  });
+
+  function render(){
+    var warn = $("o-warn");
+    warn.className = "warn";
+    warn.textContent = "";
+
+    // 현탁액 농도
+    var cStock, vAvail = NaN;
+    if (mode === "a"){
+      vAvail = num($("i-vol"));
+      var cells = num($("i-count"));
+      cStock = (vAvail > 0 && cells > 0) ? cells / vAvail : NaN;
+    } else {
+      cStock = num($("i-conc"));
+    }
+    $("h-conc").innerHTML = "현탁액 농도 <b>" +
+      (isFinite(cStock) && cStock > 0 ? sci(cStock) + " cells/mL" : "—") + "</b>";
+
+    // 용기 조건
+    var n    = parseInt($("i-n").value, 10);
+    var per  = num($("i-per"));
+    var dens = num($("i-dens"));
+    var sf   = num($("i-sf"));
+    if (!isFinite(sf) || sf <= 0) sf = 1;
+
+    var ok = isFinite(cStock) && cStock > 0 &&
+             isFinite(n) && n > 0 &&
+             isFinite(per) && per > 0 &&
+             isFinite(dens) && dens > 0;
+
+    $("h-vessel").innerHTML = ok
+      ? PRESET[vessel].label + " " + n + "개 · 용기당 " + vol(per) + " mL · 목표 " + sci(dens) + " cells/mL"
+      : "—";
+
+    if (!ok){
+      $("r-empty").classList.remove("hidden");
+      $("r-body").classList.add("hidden");
+      return;
+    }
+    $("r-empty").classList.add("hidden");
+    $("r-body").classList.remove("hidden");
+
+    // 계산
+    var vNet   = n * per;          // 실제로 용기에 들어가는 양
+    var vTotal = vNet * sf;        // 데드볼륨 감안한 조제량
+    var need   = vTotal * dens;    // 필요한 총 세포수
+    var vCell  = need / cStock;    // 현탁액에서 뺄 양
+    var vMedia = vTotal - vCell;
+
+    $("o-cell").innerHTML  = vol(vCell)  + '<span class="u">mL</span>';
+    $("o-media").innerHTML = (vMedia >= 0 ? vol(vMedia) : "—") + '<span class="u">mL</span>';
+    $("o-total").textContent = vol(vTotal) + " mL";
+
+    var pct = Math.max(0, Math.min(100, (vCell / vTotal) * 100));
+    $("bar-cell").style.width  = pct + "%";
+    $("bar-media").style.width = (100 - pct) + "%";
+    $("tick-mid").textContent = vol(vTotal/2);
+    $("tick-end").textContent = vol(vTotal) + " mL";
+
+    $("o-note").innerHTML =
+      "필요 세포수 &nbsp;" + sci(need) + " cells<br>" +
+      "실사용 &nbsp;" + vol(vNet) + " mL &nbsp;+&nbsp; 여유분 " + vol(vTotal - vNet) + " mL (×" + sf + ")<br>" +
+      "검산 &nbsp;" + vol(vCell) + " mL × " + sci(cStock) + " = " + sci(vCell * cStock) + " cells";
+
+    // 경고
+    if (cStock < dens){
+      warn.className = "warn on stop";
+      warn.textContent = "현탁액 농도가 목표 밀도보다 낮습니다. 이대로는 희석이 불가능하니 원심분리로 농축하세요.";
+    } else if (mode === "a" && isFinite(vAvail) && vCell > vAvail){
+      warn.className = "warn on stop";
+      warn.textContent = "현탁액이 부족합니다. " + vol(vCell) + " mL가 필요한데 " + vol(vAvail) + " mL뿐입니다 (" + vol(vCell - vAvail) + " mL 부족).";
+    } else if (vCell < 0.02){
+      warn.className = "warn on";
+      warn.textContent = "뺄 양이 " + vol(vCell) + " mL로 너무 적어 피펫팅 오차가 큽니다. 현탁액을 한 번 희석한 뒤 다시 계산하세요.";
+    } else if (mode === "a" && isFinite(vAvail) && vCell > vAvail * 0.9){
+      warn.className = "warn on";
+      warn.textContent = "현탁액을 거의 다 씁니다 (" + Math.round(vCell / vAvail * 100) + "%). 여유가 거의 없습니다.";
+    }
+  }
+
+  pickVessel("flask");
+})();
+</script>
+</body>
+</html>
