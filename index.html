@@ -214,8 +214,8 @@
   <div class="card-head"><span class="step">1</span><span class="card-title">세포 현탁액</span></div>
 
   <div class="seg" style="margin-bottom:13px">
-    <button type="button" id="mode-a" aria-pressed="true">부피 + 세포수</button>
-    <button type="button" id="mode-b" aria-pressed="false">농도 직접 입력</button>
+    <button type="button" id="mode-a" aria-pressed="true">부피 &amp; 세포수</button>
+    <button type="button" id="mode-b" aria-pressed="false">농도</button>
   </div>
 
   <div id="pane-a" class="row two">
@@ -255,15 +255,15 @@
     <button type="button" id="v-mylar" aria-pressed="false">Mylar dish</button>
   </div>
   <div class="seg sub" id="sub-flask">
-    <button type="button" id="v-t25" aria-pressed="true">25 cm²</button>
-    <button type="button" id="v-t75" aria-pressed="false">75 cm²</button>
+    <button type="button" id="v-t25" aria-pressed="false">25 cm²</button>
+    <button type="button" id="v-t75" aria-pressed="true">75 cm²</button>
   </div>
 
   <div style="margin-top:13px">
     <label class="lbl" for="i-n">개수</label>
     <div class="stepper">
       <button type="button" id="n-minus" aria-label="개수 줄이기">−</button>
-      <input type="text" id="i-n" inputmode="numeric" autocomplete="off" value="2">
+      <input type="text" id="i-n" inputmode="numeric" autocomplete="off" value="4">
       <button type="button" id="n-plus" aria-label="개수 늘리기">+</button>
     </div>
   </div>
@@ -283,12 +283,12 @@
     <div class="block">
       <label class="lbl">목표 기준</label>
       <div class="seg">
-        <button type="button" id="t-dens" aria-pressed="true">밀도</button>
-        <button type="button" id="t-cells" aria-pressed="false">용기당 세포수</button>
+        <button type="button" id="t-dens" aria-pressed="false">밀도</button>
+        <button type="button" id="t-cells" aria-pressed="true">용기당 세포수</button>
       </div>
       <div class="field" style="margin-top:9px">
-        <input type="text" id="i-target" class="wide-unit" autocomplete="off" autocapitalize="off" spellcheck="false" value="2.5E4">
-        <span class="unit" id="u-target">cells/mL</span>
+        <input type="text" id="i-target" class="wide-unit" autocomplete="off" autocapitalize="off" spellcheck="false" value="1.80E5">
+        <span class="unit" id="u-target">cells/용기</span>
       </div>
     </div>
 
@@ -366,15 +366,15 @@
   "use strict";
 
   var PRESET = {
-    t25:   { per:"7.2",  dens:"2.5E4",  label:"T25" },
-    t75:   { per:"21.6", dens:"2.5E4",  label:"T75" },
-    mylar: { per:"2",    dens:"1.75E5", label:"Mylar dish" }
+    t25:   { per:"2.4", cells:"6.00E4",          label:"T25" },
+    t75:   { per:"7.2", cells:"1.80E5", n:4,     label:"T75" },
+    mylar: { per:"2",   cells:"3.50E5", n:8,     label:"Mylar dish" }
   };
 
   var mode = "a";
-  var vessel = "t25";
-  var flaskSize = "t25";
-  var target = "dens";
+  var vessel = "t75";
+  var flaskSize = "t75";
+  var target = "cells";
   var grid = 0.5;        // 배지 보정 단위
   var calcView = "adj";  // raw | adj
 
@@ -472,15 +472,19 @@
     vessel = kind;
     var p = PRESET[kind];
     $("i-per").value = p.per;
-    $("i-target").value = (target === "dens")
-      ? p.dens
-      : (parseFloat(p.dens) * parseFloat(p.per)).toPrecision(3);
+    $("i-sf").value  = "1.2";
+    if (p.n) $("i-n").value = String(p.n);
+    $("i-target").value = (target === "cells")
+      ? p.cells
+      : (parseFloat(p.cells) / parseFloat(p.per)).toPrecision(3);
     render();
   }
   $("v-flask").addEventListener("click", function(){
     setPressed($("v-flask"), $("v-mylar"));
     $("sub-flask").classList.remove("hidden");
-    applyPreset(flaskSize);
+    setPressed($("v-t75"), $("v-t25"));
+    flaskSize = "t75";
+    applyPreset("t75");
   });
   $("v-mylar").addEventListener("click", function(){
     setPressed($("v-mylar"), $("v-flask"));
