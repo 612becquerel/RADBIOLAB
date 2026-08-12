@@ -248,7 +248,7 @@
 
 <!-- ② 용기 -->
 <section class="card">
-  <div class="card-head"><span class="step">2</span><span class="card-title">용기</span></div>
+  <div class="card-head"><span class="step">2</span><span class="card-title">배양 용기</span></div>
 
   <div class="seg">
     <button type="button" id="v-flask" aria-pressed="true">T-flask</button>
@@ -559,8 +559,9 @@
              isFinite(per) && per > 0 && isFinite(dens) && dens > 0;
 
     $("h-vessel").innerHTML = ok
-      ? PRESET[vessel].label + " " + n + "개 · 용기당 " + vol(per) + " mL<br>" +
-        "용기당 목표 세포수 " + sci(perVesselCells) + " cells · 목표 밀도 " + sci(dens) + " cells/mL"
+      ? PRESET[vessel].label + " " + n + "개 &nbsp; 용기당 " + vol(per) + " mL<br>" +
+        "용기당 목표 세포수 " + sci(perVesselCells) + " cells<br>" +
+        "목표 밀도 " + sci(dens) + " cells/mL"
       : "—";
 
     if (!ok){
@@ -582,7 +583,7 @@
     // 배지를 grid 단위로 반올림한 뒤, 목표 밀도가 유지되도록 현탁액을 역산
     // 현탁액 : 배지 = 1 : k,  k = (cStock − dens) / dens
     var k = (cStock - dens) / dens;
-    var vMedia = Math.round(vMedia0 / grid) * grid;
+    var vMedia = Math.ceil(vMedia0 / grid - 1e-9) * grid;
     if (vMedia < 0) vMedia = 0;
     vMedia = parseFloat(vMedia.toFixed(2));
 
@@ -602,7 +603,7 @@
     $("o-cell").innerHTML  = vol(vCell)  + '<span class="u">mL</span>';
     $("o-media").innerHTML = gvol(vMedia) + '<span class="u">mL</span>';
     $("o-percell").innerHTML = "용기당 " + sci(cellsPerVessel) + " cells " +
-                               "<em>· 목표 " + sci(perVesselCells) + "</em>";
+                               "<em>· 총 " + sci(cellsPerVessel * n) + " cells (" + n + "개)</em>";
 
     var cs = (vCell > 1.0 + 1e-9) ? (cEach + " µL × " + cDraws + "회") : "";
     var ms = splitP5000(vMedia);
@@ -628,11 +629,13 @@
     } else {
       rows =
         step("보정 전 배지 양", "", vol(vMedia0) + " mL") +
-        step(grid.toFixed(1) + " mL 단위 보정", vol(vMedia0) + " → 반올림", gvol(vMedia) + " mL", true) +
+        step(grid.toFixed(1) + " mL 단위 올림", vol(vMedia0) + " → 올림", gvol(vMedia) + " mL", true) +
         step("희석비 (현탁액 : 배지)", "(" + sci(cStock) + " − " + sci(dens) + ") ÷ " + sci(dens), "1 : " + k.toFixed(2)) +
         step("현탁액 재계산", gvol(vMedia) + " mL ÷ " + k.toFixed(2), vol(vCell) + " mL", true) +
         step("총 " + mm, vol(vCell) + " + " + gvol(vMedia) + " mL", vol(vTotal) + " mL") +
-        step("용기당 실제 세포수", vol(per) + " mL × " + sci(densActual) + " cells/mL", sci(cellsPerVessel) + " cells", true);
+        step("용기당 실제 세포수", vol(per) + " mL × " + sci(densActual) + " cells/mL", sci(cellsPerVessel) + " cells", true) +
+        step("실제 여유 배수", vol(vTotal) + " ÷ " + vol(vNet) + " mL",
+             "×" + (vTotal / vNet).toFixed(3) + "  (≥ " + sf + ")");
     }
     $("calc-rows").innerHTML = rows;
 
