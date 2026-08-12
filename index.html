@@ -749,6 +749,45 @@
   });
   paintBtn();
 
+  // --- 입력값 저장 / 복원 ---
+  // localStorage를 못 쓰는 환경(클로드 미리보기 등)에서는
+  // try/catch로 조용히 넘어가고 계산기는 그대로 동작한다.
+  var S_IDS = ["i-vol","i-count","i-conc","i-n","i-per","i-target","i-sf"];
+  var S_BTN = ["mode-a","mode-b","t-dens","t-cells","g-05","g-01","c-raw","c-adj"];
+  var loading = false;
+
+  function saveState(){
+    if (loading) return;
+    try{
+      var d = { v:{}, b:{}, theme: root.getAttribute("data-theme"),
+                vessel: vessel, flask: flaskSize };
+      S_IDS.forEach(function(id){ d.v[id] = $(id).value; });
+      S_BTN.forEach(function(id){ d.b[id] = $(id).getAttribute("aria-pressed"); });
+      localStorage.setItem("mm-state", JSON.stringify(d));
+    }catch(e){}
+  }
+
+  function loadState(){
+    try{
+      var raw = localStorage.getItem("mm-state");
+      if (!raw) return;
+      var d = JSON.parse(raw);
+      if (!d) return;
+      loading = true;
+      if (d.theme) root.setAttribute("data-theme", d.theme);
+      if (d.vessel === "mylar") $("v-mylar").click();
+      else { $("v-flask").click(); if (d.flask === "t25") $("v-t25").click(); }
+      S_BTN.forEach(function(id){ if (d.b[id] === "true") $(id).click(); });
+      S_IDS.forEach(function(id){ if (d.v[id] != null) $(id).value = d.v[id]; });
+      loading = false;
+      paintBtn();
+    }catch(e){ loading = false; }
+  }
+
+  document.addEventListener("input", saveState);
+  document.addEventListener("click", saveState);
+  loadState();
+
   render();
 })();
 </script>
