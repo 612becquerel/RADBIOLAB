@@ -25,6 +25,36 @@
     --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, monospace;
     --sans: -apple-system, BlinkMacSystemFont, "Apple SD Gothic Neo", "Segoe UI", system-ui, sans-serif;
   }
+
+  /* 라이트 팔레트 */
+  :root[data-theme="light"]{
+    --bg:#F2F5F8;
+    --panel:#FFFFFF;
+    --panel-2:#F1F4F7;
+    --line:#D3DCE4;
+    --line-soft:#E4EAEF;
+    --ink:#141D26;
+    --ink-dim:#57687A;
+    --ink-faint:#8494A3;
+    --cyan:#0C7F97;
+    --phenol:#CE3557;
+    --amber:#9A6206;
+  }
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme]){
+      --bg:#F2F5F8;
+      --panel:#FFFFFF;
+      --panel-2:#F1F4F7;
+      --line:#D3DCE4;
+      --line-soft:#E4EAEF;
+      --ink:#141D26;
+      --ink-dim:#57687A;
+      --ink-faint:#8494A3;
+      --cyan:#0C7F97;
+      --phenol:#CE3557;
+      --amber:#9A6206;
+    }
+  }
   *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
   html,body{margin:0;padding:0}
   body{
@@ -42,7 +72,13 @@
     font-family:var(--mono);font-size:11px;letter-spacing:.18em;
     text-transform:uppercase;color:var(--ink-faint);margin:0 0 6px;
   }
-  h1{font-size:23px;font-weight:650;letter-spacing:-.01em;margin:0 0 26px}
+  .titlebar{
+    display:flex;align-items:flex-start;justify-content:space-between;
+    gap:12px;margin-bottom:26px;
+  }
+  h1{font-size:23px;font-weight:650;letter-spacing:-.01em;margin:0}
+  .theme-seg{width:124px;flex:none;margin-top:1px}
+  .theme-seg button{font-family:var(--mono);font-size:11.5px;padding:6px 4px}
 
   .card{
     background:var(--panel);border:1px solid var(--line-soft);
@@ -201,13 +237,37 @@
   }
   .gloss b{color:var(--ink-dim);font-weight:500}
 
+  .credit{
+    display:flex;align-items:center;justify-content:space-between;gap:14px;
+    font-family:var(--mono);font-size:10.5px;letter-spacing:.06em;
+    color:var(--ink-faint);
+    margin-top:20px;padding-top:14px;
+    border-top:1px solid var(--line-soft);
+  }
+  .lab-logo{height:26px;width:auto;display:block;opacity:.9;flex:none}
+  .logo-light{display:none}
+  @media (prefers-color-scheme: light){
+    :root:not([data-theme]) .logo-dark{display:none}
+    :root:not([data-theme]) .logo-light{display:block}
+  }
+  :root[data-theme="light"] .logo-dark{display:none}
+  :root[data-theme="light"] .logo-light{display:block}
+  :root[data-theme="dark"] .logo-dark{display:block}
+  :root[data-theme="dark"] .logo-light{display:none}
+
   @media (prefers-reduced-motion: reduce){ *{transition:none !important} }
 </style>
 </head>
 <body>
 
 <p class="eyebrow">Cell seeding</p>
-<h1>Master Mix 계산</h1>
+<div class="titlebar">
+  <h1>Master Mix 계산</h1>
+  <div class="seg theme-seg" role="group" aria-label="테마">
+    <button type="button" id="th-light" aria-pressed="false">Light</button>
+    <button type="button" id="th-dark" aria-pressed="true">Dark</button>
+  </div>
+</div>
 
 <!-- ① 세포 현탁액 -->
 <section class="card">
@@ -360,6 +420,12 @@
   <b>MMT</b> — Master Mix for T-flask<br>
   <b>MMM</b> — Master Mix for Mylar
 </p>
+
+<footer class="credit">
+  <img class="lab-logo logo-dark" src="data:image/png;base64,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" alt="RADBIO — Radiation Bioengineering Laboratory">
+  <img class="lab-logo logo-light" src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAANQAAABRCAYAAACqo4hzAAAPIklEQVR42u1dXWwTVxb+jk1ZtJWSVNWC1DZhJSqq2qWUH2lbhS4qtJU2lfNjYhc/8AYoTV62al6QEirH1j5RLS9LI8jLipXSxmkSYrGrVUV3G6BbrVYJpSTdovIA/VlBVTVB2i4C7LMP9jgTM+O5d+wZj537SaPE47n3nHvnfPeec+fOMTEzFBTqATQR3gpknoaPgiAaKHzBnESW5wH/Fxye+MxRHWwRiigEYLpCOqQBfMzAHAFXwHyrvBZRAsCATT0OCssn2g9gtEJ90A/gWwCzYL4q3eTJrkPw4WQF7SIN5o8BXAXTl9w1KaUTTXW+C6IeW5KZh7lz6g1pIvmyPUIymYeR9Q07RSy7hHJyWusHcNo2scrTrR/M71S5D4YB/F6GWHSmy2k3I41M5jiHpz9yQx/umCQJ8r4FomPSQrI4zF2TpyrdUT4PztzHANxkoj1Vkl1t9AD4Mj8DegUh+P3naKozQRPh9Z5x8aY6E7bIlLP8kzTVmfAKoZKOdxZwzo5RMXC4TJexRfDKdoe7YDTvvoq4SUl3LJgG4OcRS1KVow/zsASZBkxn1Lv3N3LHJOHu/Y15d96wPZUmFdlelLATRzFTvuzzAP4hWCoG5vekxBBtJeCSrfsJPEfMn0mQ77rNPlgP4IDArJgE86B1HNGxH36fVEynd61oon0P/P5zlYpz7OiDTDbG4TOW99oyZszQc/oYiSbCW+HnSyXa086dU+nqEspOHKEZU87o9xBwTtDI9xLzR5K6vWXHhZOWVUYfSCyitIPZ8obLxi7FsYoUCSyMn1LRRqy9t1jp2IkmuzbDhy9l67Hsm7v3N3IkfaNmYygCrki6f42SIp60qdc2l7vitMA10xKuqH1ksp8IX+v3jVIqanpPODK25Izh8JuO1PuQ/0htL0rIr+L9xkZwbwdNLveD6GreEcdVkR2h/XeednUQnmjfY3s53trT6Mk9x6pVQtkJ0sU7p5yVqAGPtr+HibZ6SiOfr9VVeX7/b51tT7ZnNREKEga1rszRqtGL7SfgZW8pRLvdm53CWwGEHG5P2bNUTRGKACEXg23GTzo0erQLjnmM7CHXJPmy3S7JeXnVEArA4y7JeczDffA0VhkoFW0s8cyp0rPUsVKLLfVGKKFlcJOVOuGHjQz83LNuL7DFQ+qkXZHi8uJHOfJqjVCiaDI4Ny/hWm7zasPITTfLkt38sTuN9rs7iJQhr14JZeQefCJR/kkPty3kmTgqm73oTlzj8iBShrz6I5SZsTHLPGPp8XgrvUCoNIenP3UlfnJ/Vg7Z3QRca4RK2jS2fmmfv7xnWU7HUY7MoFJGlMkcd6Wxa+5tqM7AzE2rgVDzAsb2iMG52/l/ZXz+dV7tBAIedqbm+8+IkSkbE303qvzRI/NEdUYte3Jr68Eu8IXAZY8anLuW//tttWeBCmFz5Wcnwd3mgjvCK6hZlTwFe3LX1BCf0oKvVWwyOPdDniS3RF8FdW4W8NBMp9+B7feLuHl7XZuZCkM+PV6VzrEpt3ozlORKFQPHBYnQYHDux/zfr6o5C1QQTa5Ky2RjuPtQk+tkqkFU0+WTCTaTEu8oPfjwd3mF746EzN0evm/u7BrI4jB3TBKHz7zn2OsY1gPv7lqSW01CbRd19VCpXA9yr4yEsNrhw0k60zVNE+17qqhFqJbk+qrE/haIvY6RBHAAzEsS9RrVUeqzbH11A+6YJO1AJvOCqWH5/ec8QCzl8hkYKOdfGbfMw8DAXjAPCpMpB6Ol7kWLz7L11Se5wtOfgrm95IitZT4qY/OoIpS7SCOXTahJOodEjoRPGJybK/VZtr66xr2M9Soq0QDW3jvtpXRiilDGGGZgEMxpyVlp+V4D6w3O/VR06geJKjcpEzGZrXzZuOoGbxOqh4BLebdwv80NoEbPDr4rItiPEgRtUCZiOlP1qJiq2oRipnwaradQel/dKIDTNnIoGC113inSQWaT7LHVZAzySVoczvGgCCVMrKsMWCVvDBFwSZJUIQNZt+rwvg17RI9QJTIFWdhKf5VsNFk7hAIgmp017wZaB8DG15gZnvhN8ubS+VfeUSVTr6/kL9Z6DFUKBwSuWSdheDKbZB9RjkwpC3J4rx3T7erMUPbk1gqhjlnNUia7w6+aXCvjBj7qwf646hlNnN4axJlr1SGUPbm19PrGryxcw4cNiPNfk2u/EbYXD+aXMGtXteIoZ6tf80N1Bgr/N/VOqM2y35fYXS7jHzd5rSNkBoQ6wH+q5PIt1juhdtsw/OuF7U76A7gpIdeLqZlvrhY2cXiiGqu0abtya4lQoaoZvreytdreSVK7rHJ56TxrP99gfWQ9ct7gPUModiu5pLixO//ridnsnLttyny+ugnlsMF7LL/EPz3W94vOi1hzxdUWZdZ9sdoJ9ZgBCQ4XtjoZHAzslVgE8Ex+CeGfK3XNPXJ+9uDwxC3R396txIxbztvJdUEok1zk1yxIUnP5Jcr+QW5HRnP+yiXi/tEdOb7xcorXywy1yYAwP1mUkRmFPOHyEfBXR+uXf3EwXYnfpRWbpZzPUovc6t5nq55QJq9ZfGcxtcsQyrnUzOJ7Bfsld8rbwP/kCMV8yt3ZMBtztv7ys+HWywxVKtNRKVQ9v4TEXsGU473of0hm32Ia99bOuEuon/0Fzq1ypiuRJs0+obzybKY8PRYlrt1qILvs18AFf+az3WqAqEieB5lf78tkjrudWowjY0sis0hxXwj1TYYGK6GjbUIxEK2Ae5Mus7y5HkT7LepaD7kXCA8ZnDtQ1kCQ09FKhySYrftpzb2obVVSoRaa7DoEIrH+EMhtbudtXpEyHJ7+yPLZl//+L1d+vrOj9EIEDpcbO5VHKKJ3CThpo+SRIjLITt/XmWiPTo/nS+gxCqJpwxcUiTYDGJGUHQJRQldHAnbe6F3e/rQI61RqSTBbjpw01ZmAT/5+0JkupjNdjLVrrguXF8htTlOdbwnlSX+ACP5zNNGx3/K6e2uPlRyM/ZygVKhFGyxKvlnMnOSuyYrFgsTMsGUUtqc2LqQXZ6KtBFyyXQfRuwILBukH0mMRTcPuLull2QwHwcBhEgz6V+Qodw5pZDK/E1ltK1cf7pi0TEFPE+H18PMIytntzpzkzqnBSnZSVRcl8g8py9m6IrL6FhI85xUMM/Acub2CZm50w8hk9nLHZLtLS9diaoUnbiFDB21vfWLurzSZyiGUrc2Khg8mcy6NTH36DhR5ep4WPCcru5J72JIAYgCeAvMb0rshKrefLg3mfmRxGJnMXmRoA3dOvWFj9Stdlg4SpOLOqUFkMnuFy+UGiBe4c+odhyYJhoJCPYAm2p8H+beAeDuIelYMOFmeB/lmuWvS0bedFaEUFOolhlJQUIRSUFBQhFJQUIRSUFCEUlBQhFJQUFCEUlBQhFJQUIRSUFBQhFJQUIRSUFCEUlBQUIRSUFCEUlBQhFJQUIRSUFCQIxQ1JIMUIzI6+toIaBaripqjWrkhtALASB+1EUVj4nXkYLecCMajJm0NBgt6O61DtdrunsximwrGaBxBKRvqm2urUULx7YF5Hk1FACAApPgyM4/O9mIJONGIYHKXSarjIvDXR3qxZPcGEHUH3Whw9xiPchy5pJG9s0vMPDoTxw0sLABvB1vEbryChS3cHpjH2UQAACIAz1/gbsyL2NCYdm8chXP2ZurybXsJ1wOSlW3bsJJQB//Af2YeG2Xg61Ll5vqwC5H9z8qWqxRePIrPczd/AVjI/bSo2zpUq+3VbGu1UGxvrhBq7m/YuIAA8PrADQZuA9TQt5PaCtP4zpE2je2588EYva1XWrtWcyWMy4/spLbtJ9CIVARE0VjfA+WA869Sa1BzHV4937rCdQtGYzu1em26CeeHsGVwAUAgARzF53OCOuR8SApGgyvbZKXbcl26IzoeK5Zr2UYD2abnh6h12f3qzn//YH/b1d3OLGFsT3mcOIQgUYyCydL3wKRdhGSziL0R0CxTb/c4BZfbH41RwU3Nu7XMDGZGKoIYoDsiiRiYG7TvOY5WIBBDioO5ayMxMDfP9qINQAxxbtX/z4yGRGD5OrPynEIwAMQQScVysozK5evU/89ojkC7LtG8ooyms9mh1aM/ApEYElpZQR003V+ZWdbHSjetfO9sW0FOQOvrIrml6jGTbaqT7h73zrbNxNFq3Hd2dS/u5+K2GN0DA3vQy9Da0jvbZm4Hxu2Ki9qbZL0r6tDankAz9nGQmYtnqACQSl1OBACkBoEhbCl8dZQvMi+c3RchjM0DwDwwjoZr36MRCAABLBa7fCtgUt5yer65XD8CWAwAwM255eTvgWcBDNqL3fIxFDPOJpACBmmXfmHCUocFNC0AwIe/biHCrhQAXBlvkdZt4TJQ6mdNjeoxk22lEwLAS9uuv3iUL+bcPBP9KqV7MYaolYbQKmUP319rtLSDonYdFaxftl4GvkY3z/+pF0tYyHGke3BfA8Zz7rKBy9eNgTguBwDg7WjL8soPNUeDeO2DODdFbYVz5ZZ3OIh+PR8MrzA+EbLricmjPNZdOl/5Ub4424slnNjeSITXBhEBUmOXZeMXM9m2dBJFBXQ/fwE543XcHpytv7DG8H605YN948iFRWYxlMZApKCt8s31YUtqAQCG8G/des2mX2BJC+bPXygZCBqWF1voyC8WaKPvhm2V+RkVrZ4kNUffR45Iz3TfENWh0Kl/P9tIQAPGKUjdVquE1DByYgfAfIGZR3l+bFRsBczkhhbJtqeTeNwjr7tuZhinYM+HgRZhe9D6+pnuG7J2IGpvtu2rm+fjkdw6FsZzZMqNzQVfV3esiIFy/mdc8y93nGo7pcVKel8agRiQvyaSihXiqbyvOWNZPve5uByYG5bPBfKxgT7mC8SwL+/TrojFjI8HYsWCrEAM8VzdojowM2ZeQWtB9o5TbZa6pXSf9fFbioPFchMWbTSSbXpeHzfq4h4pmSV0N46fjI6iWKnYHuJoRXym9dSO/DlduwzvgUm7WNDepOvVHykE9foxs8oc6z6oIRnEa4MLRacjKVTMNVO6u4NxCtJ7DB5fnqXXKAN3GUPYMogEwANnNb97ro/atj/4u9tKd6/yKEqxCFJIpXAZvDJ+VDOU+6N8cx9hy4nCylgA2PHmEv518IJmpEp3b2Okj9oOnQg0Ij5/g4/iov67/wMbmHDBW/eMGgAAAABJRU5ErkJggg==" alt="RADBIO — Radiation Bioengineering Laboratory">
+  <span>Made by 임지훈</span>
+</footer>
 
 <script>
 (function(){
@@ -657,6 +723,31 @@
       warn.textContent = "현탁액을 거의 다 씁니다 (" + Math.round(vCell / vAvail * 100) + "%). 여유가 거의 없습니다.";
     }
   }
+
+  // --- 테마 ---
+  var root = document.documentElement;
+  function isLight(){
+    var t = root.getAttribute("data-theme");
+    if (t) return t === "light";
+    return window.matchMedia("(prefers-color-scheme: light)").matches;
+  }
+  function paintBtn(){
+    var light = isLight();
+    if (light) setPressed($("th-light"), $("th-dark"));
+    else setPressed($("th-dark"), $("th-light"));
+    var meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute("content", light ? "#F2F5F8" : "#0E141A");
+  }
+  $("th-light").addEventListener("click", function(){
+    root.setAttribute("data-theme", "light"); paintBtn();
+  });
+  $("th-dark").addEventListener("click", function(){
+    root.setAttribute("data-theme", "dark"); paintBtn();
+  });
+  window.matchMedia("(prefers-color-scheme: light)").addEventListener("change", function(){
+    if (!root.getAttribute("data-theme")) paintBtn();
+  });
+  paintBtn();
 
   render();
 })();
