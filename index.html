@@ -255,6 +255,48 @@
   :root[data-theme="dark"] .logo-dark{display:block}
   :root[data-theme="dark"] .logo-light{display:none}
 
+  .save-btn{
+    appearance:none;width:100%;margin-top:16px;
+    background:var(--panel-2);border:1px solid var(--line);border-radius:10px;
+    color:var(--ink);font-family:var(--sans);font-size:14px;font-weight:500;
+    padding:12px 10px;cursor:pointer;transition:background .12s ease;
+  }
+  .save-btn:active{background:var(--line)}
+  .save-btn:focus-visible{outline:2px solid var(--cyan);outline-offset:2px}
+
+  /* ---- 인쇄 / PDF ---- */
+  #sheet{display:none}
+  @media print{
+    @page{ margin:14mm; }
+    body{
+      background:#fff;color:#000;padding:0;max-width:none;
+      -webkit-print-color-adjust:exact;print-color-adjust:exact;
+    }
+    body > *{display:none !important}
+    #sheet{display:block !important;font-family:var(--sans);color:#000}
+    #sheet .sh-head{
+      display:flex;align-items:flex-end;justify-content:space-between;
+      gap:16px;border-bottom:1.5px solid #000;padding-bottom:8px;margin-bottom:14px;
+    }
+    #sheet .sh-title{font-size:16px;font-weight:700;margin:0}
+    #sheet .sh-time{font-family:var(--mono);font-size:11px;color:#333}
+    #sheet .sh-logo{height:24px;width:auto}
+    #sheet h2{
+      font-family:var(--mono);font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+      color:#555;margin:16px 0 6px;font-weight:600;
+    }
+    #sheet table{width:100%;border-collapse:collapse;font-size:11.5px}
+    #sheet td{padding:4px 0;border-bottom:1px solid #ddd;vertical-align:top}
+    #sheet td:first-child{color:#555;width:44%}
+    #sheet td:last-child{text-align:right;font-family:var(--mono)}
+    #sheet .big td{font-size:13px;font-weight:600;padding:7px 0}
+    #sheet .sh-foot{
+      display:flex;justify-content:space-between;align-items:center;
+      margin-top:20px;padding-top:8px;border-top:1px solid #ccc;
+      font-family:var(--mono);font-size:9.5px;color:#666;
+    }
+  }
+
   @media (prefers-reduced-motion: reduce){ *{transition:none !important} }
 </style>
 </head>
@@ -413,6 +455,8 @@
     </div>
 
     <div class="warn" id="o-warn"></div>
+
+    <button type="button" class="save-btn" id="save-btn">PDF로 저장 / 인쇄</button>
   </div>
 </section>
 
@@ -420,6 +464,8 @@
   <b>MMT</b> — Master Mix for T-flask<br>
   <b>MMM</b> — Master Mix for Mylar
 </p>
+
+<div id="sheet"></div>
 
 <footer class="credit">
   <img class="lab-logo logo-dark" src="data:image/png;base64,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" alt="RADBIO — Radiation Bioengineering Laboratory">
@@ -445,6 +491,7 @@
   var calcView = "adj";  // raw | adj
 
   var $ = function(id){ return document.getElementById(id); };
+  var LAST = null;
 
   function num(el){
     var raw = (el.value || "").trim().replace(/,/g,"").replace(/\s+/g,"");
@@ -705,6 +752,15 @@
     }
     $("calc-rows").innerHTML = rows;
 
+    LAST = {
+      mm:mm, label:PRESET[vessel].label, n:n, per:per, sf:sf, grid:grid,
+      cStock:cStock, dens:dens, perVesselCells:perVesselCells,
+      vNet:vNet, vTotal0:vTotal0, need:need, vCell0:vCell0, vMedia0:vMedia0,
+      k:k, vMedia:vMedia, vCell:vCell, vTotal:vTotal,
+      densActual:densActual, cellsPerVessel:cellsPerVessel,
+      cEach:cEach, cDraws:cDraws, ms:ms, mPip:mPip
+    };
+
     // --- 경고 ---
     if (cStock <= dens){
       warn.className = "warn on stop";
@@ -783,6 +839,76 @@
       paintBtn();
     }catch(e){ loading = false; }
   }
+
+  // --- PDF / 인쇄 ---
+  function pad(x){ return (x < 10 ? "0" : "") + x; }
+  function stamp(d){
+    return d.getFullYear() + "-" + pad(d.getMonth()+1) + "-" + pad(d.getDate()) +
+           "  " + pad(d.getHours()) + ":" + pad(d.getMinutes());
+  }
+  function tr(a, b){ return "<tr><td>" + a + "</td><td>" + b + "</td></tr>"; }
+
+  function buildSheet(){
+    if (!LAST) return "";
+    var L = LAST, d = new Date();
+    var logo = document.querySelector(".logo-light");
+    var cellSplit = (L.vCell > 1.0 + 1e-9) ? " (" + L.cEach + " µL × " + L.cDraws + "회)" : "";
+    var mediaSplit = L.ms ? " (" + L.ms + ")" : "";
+
+    return '<div class="sh-head">' +
+             '<div><p class="sh-title">' + L.mm + ' 조제 기록</p>' +
+             '<p class="sh-time">' + stamp(d) + '</p></div>' +
+             (logo ? '<img class="sh-logo" src="' + logo.getAttribute("src") + '" alt="">' : '') +
+           '</div>' +
+
+           '<h2>조제량</h2><table><tbody>' +
+             '<tr class="big"><td>총 ' + L.mm + '</td><td>' + vol(L.vTotal) + ' mL</td></tr>' +
+             '<tr class="big"><td>세포 현탁액</td><td>' + vol(L.vCell) + ' mL' + cellSplit + '</td></tr>' +
+             '<tr class="big"><td>배지</td><td>' + gvol(L.vMedia) + ' mL' + mediaSplit + '</td></tr>' +
+           '</tbody></table>' +
+
+           '<h2>결과</h2><table><tbody>' +
+             tr("용기당 실제 세포수", sci(L.cellsPerVessel) + " cells") +
+             tr("총 세포수", sci(L.cellsPerVessel * L.n) + " cells") +
+             tr("실제 밀도", sci(L.densActual) + " cells/mL") +
+             tr("실제 여유 배수", "×" + (L.vTotal / L.vNet).toFixed(3)) +
+           '</tbody></table>' +
+
+           '<h2>조건</h2><table><tbody>' +
+             tr("세포 현탁액 농도", sci(L.cStock) + " cells/mL") +
+             tr("배양 용기", L.label + " " + L.n + "개") +
+             tr("용기당 부피", vol(L.per) + " mL") +
+             tr("여유 배수", "×" + L.sf) +
+             tr("용기당 목표 세포수", sci(L.perVesselCells) + " cells") +
+             tr("목표 밀도", sci(L.dens) + " cells/mL") +
+             tr("배지 보정 단위", L.grid.toFixed(1) + " mL 올림") +
+           '</tbody></table>' +
+
+           '<h2>계산 과정</h2><table><tbody>' +
+             tr("실사용", vol(L.per) + " × " + L.n + " = " + vol(L.vNet) + " mL") +
+             tr("여유 배수 적용", vol(L.vNet) + " × " + L.sf + " = " + vol(L.vTotal0) + " mL") +
+             tr("필요 세포수", vol(L.vTotal0) + " × " + sci(L.dens) + " = " + sci(L.need) + " cells") +
+             tr("보정 전 현탁액", vol(L.vCell0) + " mL") +
+             tr("보정 전 배지", vol(L.vMedia0) + " mL") +
+             tr(L.grid.toFixed(1) + " mL 올림", vol(L.vMedia0) + " → " + gvol(L.vMedia) + " mL") +
+             tr("희석비 (현탁액 : 배지)", "1 : " + L.k.toFixed(2)) +
+             tr("현탁액 재계산", gvol(L.vMedia) + " ÷ " + L.k.toFixed(2) + " = " + vol(L.vCell) + " mL") +
+           '</tbody></table>' +
+
+           '<div class="sh-foot"><span>RADBIO — Radiation Bioengineering Laboratory</span>' +
+           '<span>Made by 임지훈</span></div>';
+  }
+
+  $("save-btn").addEventListener("click", function(){
+    if (!LAST) return;
+    $("sheet").innerHTML = buildSheet();
+    var d = new Date();
+    var old = document.title;
+    document.title = LAST.mm + "_" + d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) +
+                     "_" + pad(d.getHours()) + pad(d.getMinutes());
+    window.print();
+    setTimeout(function(){ document.title = old; }, 800);
+  });
 
   document.addEventListener("input", saveState);
   document.addEventListener("click", saveState);
