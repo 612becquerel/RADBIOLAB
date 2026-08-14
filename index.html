@@ -636,7 +636,7 @@
   $("n-minus").addEventListener("click", function(){ bump(-1); });
   $("n-plus").addEventListener("click", function(){ bump(1); });
 
-  ["i-vol","i-count","i-conc","i-n","i-per","i-target","i-sf"].forEach(function(id){
+  ["i-pass","i-vol","i-count","i-conc","i-n","i-per","i-target","i-sf"].forEach(function(id){
     $(id).addEventListener("input", render);
   });
 
@@ -774,6 +774,8 @@
       densActual:densActual, cellsPerVessel:cellsPerVessel,
       cEach:cEach, cDraws:cDraws, ms:ms, mPip:mPip
     };
+
+    try{ document.title = fileStamp(); }catch(e){}
 
     // --- 경고 ---
     if (cStock <= dens){
@@ -926,24 +928,15 @@
     return (p ? p + "_" : "") + date + "_" + LAST.mm;
   }
 
-  // iOS는 저장 시점의 document.title을 파일명으로 쓴다.
-  // 인쇄 미리보기 → 공유 → 파일에 저장까지 시간이 걸리므로
-  // 제목을 곧바로 되돌리면 원래 <title>이 파일명이 되어버린다.
-  // 따라서 다음에 사용자가 값을 다시 만질 때까지 제목을 유지한다.
-  var titleOrig = null;
-  function restoreTitle(){
-    if (titleOrig !== null){ document.title = titleOrig; titleOrig = null; }
-  }
-
+  // iOS Safari는 PDF 저장 시 <title>을 파일명으로 쓴다.
+  // 인쇄 직전에만 바꾸면 저장 시점에 이미 원래 제목으로 돌아가 있으므로,
+  // 아예 항상 파일명과 같은 제목을 유지한다. (render마다 갱신)
   $("save-btn").addEventListener("click", function(){
     if (!LAST) return;
     $("sheet").innerHTML = buildSheet();
-    if (titleOrig === null) titleOrig = document.title;
     document.title = fileStamp();
     window.print();
   });
-
-  document.addEventListener("input", restoreTitle);
 
   document.addEventListener("input", saveState);
   document.addEventListener("click", saveState);
