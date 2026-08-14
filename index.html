@@ -325,6 +325,14 @@
     <button type="button" id="mode-b" aria-pressed="false">농도</button>
   </div>
 
+  <div style="margin-bottom:11px">
+    <label class="lbl" for="i-pass">Passage</label>
+    <div class="field">
+      <input type="text" id="i-pass" inputmode="numeric" autocomplete="off" placeholder="33">
+      <span class="unit">P</span>
+    </div>
+  </div>
+
   <div id="pane-a" class="row two">
     <div>
       <label class="lbl" for="i-vol">부피</label>
@@ -814,7 +822,7 @@
   // --- 입력값 저장 / 복원 ---
   // localStorage를 못 쓰는 환경(클로드 미리보기 등)에서는
   // try/catch로 조용히 넘어가고 계산기는 그대로 동작한다.
-  var S_IDS = ["i-vol","i-count","i-conc","i-n","i-per","i-target","i-sf"];
+  var S_IDS = ["i-pass","i-vol","i-count","i-conc","i-n","i-per","i-target","i-sf"];
   var S_BTN = ["mode-a","mode-b","t-dens","t-cells","g-05","g-01","c-raw","c-adj"];
   var loading = false;
 
@@ -862,7 +870,7 @@
     var mediaSplit = L.ms ? " (" + L.ms + ")" : "";
 
     return '<div class="sh-head">' +
-             '<div><p class="sh-title">' + L.mm + ' 조제 기록</p>' +
+             '<div><p class="sh-title">' + (passLabel() ? passLabel() + '  ' : '') + L.mm + ' 조제 기록</p>' +
              '<p class="sh-time">' + stamp(d) + '</p></div>' +
              (logo ? '<img class="sh-logo" src="' + logo.getAttribute("src") + '" alt="">' : '') +
            '</div>' +
@@ -882,6 +890,7 @@
 
            '<div class="cols"><div>' +
            '<h2>조건</h2><table><tbody>' +
+             (passLabel() ? tr("Passage", passLabel()) : "") +
              tr("세포 현탁액 농도", sci(L.cStock) + " cells/mL") +
              tr("배양 용기", L.label + " " + L.n + "개") +
              tr("용기당 부피", vol(L.per) + " mL") +
@@ -906,10 +915,15 @@
            '<span>Made by 임지훈</span></div>';
   }
 
+  function passLabel(){
+    var v = ($("i-pass").value || "").trim().replace(/^[Pp]/, "");
+    return v ? "P" + v : "";
+  }
   function fileStamp(){
     var d = new Date();
-    return LAST.mm + "_" + d.getFullYear() + pad(d.getMonth()+1) + pad(d.getDate()) +
-           "_" + pad(d.getHours()) + pad(d.getMinutes());
+    var date = d.getFullYear() + "_" + pad(d.getMonth()+1) + "_" + pad(d.getDate());
+    var p = passLabel();
+    return (p ? p + "_" : "") + date + "_" + LAST.mm;
   }
 
   $("save-btn").addEventListener("click", function(){
