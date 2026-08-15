@@ -113,6 +113,24 @@
   .row{display:grid;gap:11px}
   .row.two{grid-template-columns:1fr 1fr}
 
+  input[type="datetime-local"]{
+    width:100%;background:var(--panel-2);
+    border:1px solid var(--line);border-radius:9px;
+    color:var(--ink);font-family:var(--mono);font-size:15px;
+    padding:10px 12px;outline:none;
+    -webkit-appearance:none;appearance:none;min-height:42px;
+  }
+  input[type="datetime-local"]:focus{border-color:var(--cyan)}
+  .tbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:9px}
+  .tbtn{
+    appearance:none;background:var(--panel-2);
+    border:1px solid var(--line);border-radius:9px;
+    color:var(--ink-dim);font-family:var(--sans);font-size:12.5px;
+    padding:9px 6px;cursor:pointer;transition:background .12s ease,color .12s ease;
+  }
+  .tbtn:active{background:var(--line);color:var(--ink)}
+  .tbtn:focus-visible{outline:2px solid var(--cyan);outline-offset:1px}
+
   .seg{
     display:grid;grid-template-columns:1fr 1fr;gap:4px;
     background:var(--panel-2);border:1px solid var(--line);
@@ -316,21 +334,52 @@
   </div>
 </div>
 
-<!-- ① 세포 현탁액 -->
+<!-- ① 세포 정보 -->
 <section class="card">
-  <div class="card-head"><span class="step">1</span><span class="card-title">세포 현탁액</span></div>
+  <div class="card-head"><span class="step">1</span><span class="card-title">세포 정보</span></div>
+
+  <div class="row two">
+    <div>
+      <label class="lbl" for="i-pass">Passage</label>
+      <div class="field">
+        <input type="text" id="i-pass" inputmode="numeric" autocomplete="off" placeholder="33">
+        <span class="unit">P</span>
+      </div>
+    </div>
+    <div>
+      <label class="lbl" for="i-flask">회수 플라스크</label>
+      <div class="field">
+        <input type="text" id="i-flask" inputmode="numeric" autocomplete="off" value="4">
+        <span class="unit">개</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="margin-top:11px">
+    <label class="lbl" for="i-tseed">Seeding 시각</label>
+    <input type="datetime-local" id="i-tseed">
+  </div>
+
+  <div style="margin-top:11px">
+    <label class="lbl" for="i-ttryp">Trypsin 처리 시각</label>
+    <input type="datetime-local" id="i-ttryp">
+  </div>
+
+  <div class="tbtns">
+    <button type="button" class="tbtn" id="t-swap">⇅ 두 시각 교체</button>
+    <button type="button" class="tbtn" id="t-now">Trypsin 현재 시각으로 초기화</button>
+  </div>
+
+  <p class="hint" id="h-growth">—</p>
+</section>
+
+<!-- ② 세포 현탁액 -->
+<section class="card">
+  <div class="card-head"><span class="step">2</span><span class="card-title">세포 현탁액</span></div>
 
   <div class="seg" style="margin-bottom:13px">
     <button type="button" id="mode-a" aria-pressed="true">부피 &amp; 세포수</button>
     <button type="button" id="mode-b" aria-pressed="false">농도</button>
-  </div>
-
-  <div style="margin-bottom:11px">
-    <label class="lbl" for="i-pass">Passage</label>
-    <div class="field">
-      <input type="text" id="i-pass" inputmode="numeric" autocomplete="off" placeholder="33">
-      <span class="unit">P</span>
-    </div>
   </div>
 
   <div id="pane-a" class="row two">
@@ -361,9 +410,9 @@
   <p class="hint" id="h-conc">현탁액 농도 <b>—</b></p>
 </section>
 
-<!-- ② 용기 -->
+<!-- ③ 배양 용기 -->
 <section class="card">
-  <div class="card-head"><span class="step">2</span><span class="card-title">배양 용기</span></div>
+  <div class="card-head"><span class="step">3</span><span class="card-title">배양 용기</span></div>
 
   <div class="seg">
     <button type="button" id="v-flask" aria-pressed="true">T-flask</button>
@@ -419,9 +468,10 @@
   <p class="hint" id="h-vessel">—</p>
 </section>
 
-<!-- ③ MMT / MMM -->
+
+<!-- ④ MMT / MMM -->
 <section class="card">
-  <div class="card-head"><span class="step">3</span><span class="card-title" id="mm-title">MMT</span></div>
+  <div class="card-head"><span class="step">4</span><span class="card-title" id="mm-title">MMT</span></div>
 
   <div id="r-empty" class="empty">숫자를 입력하면 여기에 결과가 나옵니다.</div>
 
@@ -636,9 +686,68 @@
   $("n-minus").addEventListener("click", function(){ bump(-1); });
   $("n-plus").addEventListener("click", function(){ bump(1); });
 
-  ["i-pass","i-vol","i-count","i-conc","i-n","i-per","i-target","i-sf"].forEach(function(id){
+  ["i-pass","i-flask","i-tseed","i-ttryp",
+   "i-vol","i-count","i-conc","i-n","i-per","i-target","i-sf"].forEach(function(id){
     $(id).addEventListener("input", render);
   });
+  $("i-tseed").addEventListener("change", render);
+  $("i-ttryp").addEventListener("change", render);
+
+  function nowLocal(){
+    var d = new Date();
+    return d.getFullYear() + "-" + pad2(d.getMonth()+1) + "-" + pad2(d.getDate()) +
+           "T" + pad2(d.getHours()) + ":" + pad2(d.getMinutes());
+  }
+  function pad2(x){ return (x < 10 ? "0" : "") + x; }
+
+  $("t-now").addEventListener("click", function(){
+    $("i-ttryp").value = nowLocal();
+    render(); saveState();
+  });
+  $("t-swap").addEventListener("click", function(){
+    var a = $("i-tseed").value, b = $("i-ttryp").value;
+    $("i-tseed").value = b; $("i-ttryp").value = a;
+    render(); saveState();
+  });
+
+  // 배양 시간 · 지수 성장률
+  var N0_SEED = 1.8e5;   // seeding 시 용기당 세포수 (고정)
+
+  var GROW = {};
+  function growth(totalCells){
+    GROW = {};
+    var ts = $("i-tseed").value, tt = $("i-ttryp").value;
+    var nF = parseInt($("i-flask").value, 10);
+    var N0 = N0_SEED;
+
+    if (!ts || !tt) return "배양 시간 <b>—</b>  · 두 시각을 입력하세요";
+
+    var hrs = (new Date(tt) - new Date(ts)) / 3600000;
+    if (!isFinite(hrs)) return "배양 시간 <b>—</b>";
+    if (hrs <= 0) return "배양 시간 <b>" + hrs.toFixed(1) + " h</b>  · Trypsin 시각이 Seeding보다 빠릅니다";
+
+    GROW.hrs = hrs;
+    var line1 = "배양 <b>" + hrs.toFixed(1) + " h</b>  (" + Math.floor(hrs/24) + "일 " +
+                (hrs % 24).toFixed(1) + "h)";
+
+    if (!isFinite(totalCells) || totalCells <= 0 || !isFinite(nF) || nF <= 0 ||
+        !isFinite(N0) || N0 <= 0){
+      return line1 + "<br>플라스크 수와 현탁액 세포수를 입력하면 증가율이 나옵니다";
+    }
+
+    var Nper = totalCells / nF;
+    var fold = Nper / N0;
+    var line2 = "플라스크당 <b>" + sci(Nper) + "</b> cells  ·  N₀ " +
+                sci(N0) + " 대비 " + fold.toFixed(2) + "배";
+    if (fold <= 0) return line1 + "<br>" + line2;
+
+    var mu = Math.log(fold) / hrs;
+    GROW.mu = mu; GROW.fold = fold; GROW.Nper = Nper; GROW.nF = nF;
+    var line3 = "μ <b>" + mu.toFixed(4) + " /h</b>  ·  " +
+                ((Math.exp(mu)-1)*100).toFixed(2) + " %/h" +
+                (mu > 0 ? "  ·  배가시간 " + (Math.LN2/mu).toFixed(1) + " h" : "");
+    return line1 + "<br>" + line2 + "<br>" + line3;
+  }
 
   function step(name, expr, res, key){
     return '<div class="cstep' + (key ? ' key' : '') + '">' +
@@ -668,6 +777,8 @@
     }
     $("h-conc").innerHTML = "현탁액 농도 <b>" +
       (isFinite(cStock) && cStock > 0 ? sci(cStock) + " cells/mL" : "—") + "</b>";
+
+    $("h-growth").innerHTML = growth((mode === "a") ? num($("i-count")) : NaN);
 
     // 용기 조건
     var n   = parseInt($("i-n").value, 10);
@@ -772,7 +883,9 @@
       vNet:vNet, vTotal0:vTotal0, need:need, vCell0:vCell0, vMedia0:vMedia0,
       k:k, vMedia:vMedia, vCell:vCell, vTotal:vTotal,
       densActual:densActual, cellsPerVessel:cellsPerVessel,
-      cEach:cEach, cDraws:cDraws, ms:ms, mPip:mPip
+      cEach:cEach, cDraws:cDraws, ms:ms, mPip:mPip,
+      hrs:GROW.hrs, mu:(GROW.mu == null ? null : GROW.mu),
+      fold:GROW.fold, Nper:GROW.Nper, nF:GROW.nF
     };
 
     try{ document.title = fileStamp(); }catch(e){}
@@ -824,7 +937,8 @@
   // --- 입력값 저장 / 복원 ---
   // localStorage를 못 쓰는 환경(클로드 미리보기 등)에서는
   // try/catch로 조용히 넘어가고 계산기는 그대로 동작한다.
-  var S_IDS = ["i-pass","i-vol","i-count","i-conc","i-n","i-per","i-target","i-sf"];
+  var S_IDS = ["i-pass","i-flask","i-tseed","i-ttryp",
+               "i-vol","i-count","i-conc","i-n","i-per","i-target","i-sf"];
   var S_BTN = ["mode-a","mode-b","t-dens","t-cells","g-05","g-01","c-raw","c-adj"];
   var loading = false;
 
@@ -893,6 +1007,12 @@
            '<div class="cols"><div>' +
            '<h2>조건</h2><table><tbody>' +
              (passLabel() ? tr("Passage", passLabel()) : "") +
+             (L.hrs ? tr("배양 시간", L.hrs.toFixed(1) + " h") : "") +
+             (L.hrs ? tr("Seeding → Trypsin",
+                         $("i-tseed").value.replace("T", " ") + " → " +
+                         $("i-ttryp").value.replace("T", " ")) : "") +
+             (L.mu != null ? tr("플라스크당 회수", sci(L.Nper) + " cells (" + L.nF + "개)") : "") +
+             (L.mu != null ? tr("증가율 μ", L.mu.toFixed(4) + " /h · " + L.fold.toFixed(2) + "배 (N₀ " + sci(1.8e5) + ")") : "") +
              tr("세포 현탁액 농도", sci(L.cStock) + " cells/mL") +
              tr("배양 용기", L.label + " " + L.n + "개") +
              tr("용기당 부피", vol(L.per) + " mL") +
