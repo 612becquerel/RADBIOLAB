@@ -164,6 +164,22 @@
   .hint{font-family:var(--mono);font-size:11.5px;color:var(--ink-faint);margin-top:7px;line-height:1.7}
   .hint b{color:var(--cyan);font-weight:500}
 
+  .growth{margin-top:14px;padding-top:12px;border-top:1px solid var(--line-soft)}
+  .growth .g-row{
+    display:flex;align-items:baseline;justify-content:space-between;
+    gap:10px;padding:5px 0;font-family:var(--mono);font-size:11.5px;
+  }
+  .growth .g-row + .g-row{border-top:1px dashed var(--line-soft)}
+  .growth .g-row span{color:var(--ink-faint);white-space:nowrap}
+  .growth .g-row b{
+    color:var(--cyan);font-weight:500;text-align:right;
+    font-variant-numeric:tabular-nums;
+  }
+  .growth .g-msg{
+    font-family:var(--mono);font-size:11.5px;color:var(--ink-faint);
+    line-height:1.6;padding:4px 0;
+  }
+
   .prefs{margin-top:15px;padding-top:15px;border-top:1px solid var(--line-soft)}
   .prefs .block{margin-top:13px}
 
@@ -370,7 +386,7 @@
     <button type="button" class="tbtn" id="t-now">Trypsin 현재 시각으로 초기화</button>
   </div>
 
-  <p class="hint" id="h-growth">—</p>
+  <div class="growth" id="h-growth"></div>
 </section>
 
 <!-- ② 세포 현탁액 -->
@@ -720,33 +736,37 @@
     var nF = parseInt($("i-flask").value, 10);
     var N0 = N0_SEED;
 
-    if (!ts || !tt) return "배양 시간 <b>—</b>  · 두 시각을 입력하세요";
+    function row(a, b){
+      return '<div class="g-row"><span>' + a + '</span><b>' + b + '</b></div>';
+    }
+    function msg(t){ return '<div class="g-msg">' + t + '</div>'; }
+
+    if (!ts || !tt) return msg("Seeding · Trypsin 시각을 입력하면 배양 정보가 나옵니다");
 
     var hrs = (new Date(tt) - new Date(ts)) / 3600000;
-    if (!isFinite(hrs)) return "배양 시간 <b>—</b>";
-    if (hrs <= 0) return "배양 시간 <b>" + hrs.toFixed(1) + " h</b>  · Trypsin 시각이 Seeding보다 빠릅니다";
+    if (!isFinite(hrs)) return msg("시각 형식을 확인하세요");
+    if (hrs <= 0) return msg("Trypsin 시각이 Seeding 시각보다 빠릅니다");
 
     GROW.hrs = hrs;
-    var line1 = "배양 <b>" + hrs.toFixed(1) + " h</b>  (" + Math.floor(hrs/24) + "일 " +
-                (hrs % 24).toFixed(1) + "h)";
+    var days = Math.floor(hrs / 24);
+    var out = row("배양 시간",
+                  hrs.toFixed(1) + " h" + (days >= 1 ? "  (" + days + "일 " + (hrs % 24).toFixed(1) + "h)" : ""));
 
-    if (!isFinite(totalCells) || totalCells <= 0 || !isFinite(nF) || nF <= 0 ||
-        !isFinite(N0) || N0 <= 0){
-      return line1 + "<br>플라스크 수와 현탁액 세포수를 입력하면 증가율이 나옵니다";
+    if (!isFinite(totalCells) || totalCells <= 0 || !isFinite(nF) || nF <= 0){
+      return out + msg("플라스크 수와 현탁액 세포수를 입력하면 증가율이 나옵니다");
     }
 
     var Nper = totalCells / nF;
     var fold = Nper / N0;
-    var line2 = "플라스크당 <b>" + sci(Nper) + "</b> cells  ·  N₀ " +
-                sci(N0) + " 대비 " + fold.toFixed(2) + "배";
-    if (fold <= 0) return line1 + "<br>" + line2;
+    out += row("플라스크당 회수", sci(Nper) + " cells");
+    out += row("N₀ " + sci(N0) + " 대비", fold.toFixed(2) + " 배");
+    if (fold <= 0) return out;
 
     var mu = Math.log(fold) / hrs;
     GROW.mu = mu; GROW.fold = fold; GROW.Nper = Nper; GROW.nF = nF;
-    var line3 = "μ <b>" + mu.toFixed(4) + " /h</b>  ·  " +
-                ((Math.exp(mu)-1)*100).toFixed(2) + " %/h" +
-                (mu > 0 ? "  ·  배가시간 " + (Math.LN2/mu).toFixed(1) + " h" : "");
-    return line1 + "<br>" + line2 + "<br>" + line3;
+    out += row("증가율 μ", mu.toFixed(4) + " /h   (" + ((Math.exp(mu)-1)*100).toFixed(2) + " %/h)");
+    if (mu > 0) out += row("배가시간 T<sub>d</sub>", (Math.LN2/mu).toFixed(1) + " h");
+    return out;
   }
 
   function step(name, expr, res, key){
