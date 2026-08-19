@@ -146,6 +146,7 @@
   .seg.sub{margin-top:8px}
   .seg.sub button{font-family:var(--mono);font-size:13px;padding:6px 4px}
   .seg.mini button{font-family:var(--mono);font-size:12px;padding:5px 4px}
+  .seg.three{grid-template-columns:1fr 1fr 1fr}
 
   .stepper{
     display:grid;grid-template-columns:44px 1fr 44px;align-items:center;
@@ -386,6 +387,20 @@
     <button type="button" class="tbtn" id="t-now">Trypsin 현재 시각으로 초기화</button>
   </div>
 
+  <div class="prefs">
+    <label class="lbl">Preset</label>
+    <div class="seg mini three">
+      <button type="button" id="ps-1" aria-pressed="true">1</button>
+      <button type="button" id="ps-2" aria-pressed="false">2</button>
+      <button type="button" id="ps-3" aria-pressed="false">3</button>
+    </div>
+    <div class="tbtns">
+      <button type="button" class="tbtn" id="p-load">불러오기</button>
+      <button type="button" class="tbtn" id="p-save">현재 정보 저장</button>
+    </div>
+    <p class="hint" id="h-preset">—</p>
+  </div>
+
   <div class="growth" id="h-growth"></div>
 </section>
 
@@ -456,7 +471,7 @@
       </div>
       <div>
         <label class="lbl" for="i-sf">여유 배수</label>
-        <div class="field"><input type="text" id="i-sf" inputmode="decimal" autocomplete="off" value="1.2"><span class="unit">×</span></div>
+        <div class="field"><input type="text" id="i-sf" inputmode="decimal" autocomplete="off" value="1.05"><span class="unit">×</span></div>
       </div>
     </div>
 
@@ -467,7 +482,7 @@
         <button type="button" id="t-cells" aria-pressed="true">용기당 세포수</button>
       </div>
       <div class="field" style="margin-top:9px">
-        <input type="text" id="i-target" class="wide-unit" autocomplete="off" autocapitalize="off" spellcheck="false" value="1.80E5">
+        <input type="text" id="i-target" class="wide-unit" autocomplete="off" autocapitalize="off" spellcheck="false" value="2.00E5">
         <span class="unit" id="u-target">cells/용기</span>
       </div>
     </div>
@@ -558,8 +573,8 @@
   "use strict";
 
   var PRESET = {
-    t25:   { per:"2.4", cells:"6.00E4",          label:"T25" },
-    t75:   { per:"7.2", cells:"1.80E5", n:4,     label:"T75" },
+    t25:   { per:"2.4", cells:"6.67E4",          label:"T25" },
+    t75:   { per:"7.2", cells:"2.00E5", n:4,     label:"T75" },
     mylar: { per:"2",   cells:"3.50E5", n:8,     label:"Mylar dish" }
   };
 
@@ -665,7 +680,7 @@
     vessel = kind;
     var p = PRESET[kind];
     $("i-per").value = p.per;
-    $("i-sf").value  = "1.2";
+    $("i-sf").value  = "1.05";
     if (p.n) $("i-n").value = String(p.n);
     $("i-target").value = (target === "cells")
       ? p.cells
@@ -727,7 +742,7 @@
   });
 
   // 배양 시간 · 지수 성장률
-  var N0_SEED = 1.8e5;   // seeding 시 용기당 세포수 (고정)
+  var N0_SEED = 2.0e5;   // seeding 시 용기당 세포수 (고정)
 
   var GROW = {};
   function growth(totalCells){
@@ -954,6 +969,54 @@
   });
   paintBtn();
 
+  // --- 세포 정보 Preset (1~3) ---
+  var P_IDS = ["i-pass","i-flask","i-tseed","i-ttryp"];
+  var pSlot = 1;
+
+  function pKey(n){ return "mm-preset-" + n; }
+  function pRead(n){
+    try{
+      var raw = localStorage.getItem(pKey(n));
+      return raw ? JSON.parse(raw) : null;
+    }catch(e){ return null; }
+  }
+  function pSummary(n){
+    var d = pRead(n);
+    if (!d) return "Preset " + n + " · 비어 있음";
+    var parts = [];
+    if (d["i-pass"]) parts.push("P" + String(d["i-pass"]).replace(/^[Pp]/, ""));
+    if (d["i-flask"]) parts.push(d["i-flask"] + "개");
+    if (d["i-tseed"]) parts.push("seed " + d["i-tseed"].slice(5,16).replace("T"," "));
+    if (d["i-ttryp"]) parts.push("tryp " + d["i-ttryp"].slice(5,16).replace("T"," "));
+    return "Preset " + n + " · " + (parts.join("  ") || "빈 값");
+  }
+  function pPaint(){
+    for (var i = 1; i <= 3; i++){
+      $("ps-" + i).setAttribute("aria-pressed", i === pSlot ? "true" : "false");
+    }
+    $("h-preset").textContent = pSummary(pSlot);
+  }
+  for (var pi = 1; pi <= 3; pi++){
+    (function(n){
+      $("ps-" + n).addEventListener("click", function(){ pSlot = n; pPaint(); });
+    })(pi);
+  }
+  $("p-save").addEventListener("click", function(){
+    if (pRead(pSlot) && !confirm("Preset " + pSlot + "을(를) 덮어쓸까요?")) return;
+    try{
+      var d = {};
+      P_IDS.forEach(function(id){ d[id] = $(id).value; });
+      localStorage.setItem(pKey(pSlot), JSON.stringify(d));
+      pPaint();
+    }catch(e){ $("h-preset").textContent = "저장 실패 — 브라우저 저장소를 쓸 수 없습니다"; }
+  });
+  $("p-load").addEventListener("click", function(){
+    var d = pRead(pSlot);
+    if (!d){ $("h-preset").textContent = "Preset " + pSlot + "이(가) 비어 있습니다"; return; }
+    P_IDS.forEach(function(id){ if (d[id] != null) $(id).value = d[id]; });
+    render(); saveState(); pPaint();
+  });
+
   // --- 입력값 저장 / 복원 ---
   // localStorage를 못 쓰는 환경(클로드 미리보기 등)에서는
   // try/catch로 조용히 넘어가고 계산기는 그대로 동작한다.
@@ -1032,7 +1095,7 @@
                          $("i-tseed").value.replace("T", " ") + " → " +
                          $("i-ttryp").value.replace("T", " ")) : "") +
              (L.mu != null ? tr("플라스크당 회수", sci(L.Nper) + " cells (" + L.nF + "개)") : "") +
-             (L.mu != null ? tr("증가율 μ", L.mu.toFixed(4) + " /h · " + L.fold.toFixed(2) + "배 (N₀ " + sci(1.8e5) + ")") : "") +
+             (L.mu != null ? tr("증가율 μ", L.mu.toFixed(4) + " /h · " + L.fold.toFixed(2) + "배 (N₀ " + sci(N0_SEED) + ")") : "") +
              tr("세포 현탁액 농도", sci(L.cStock) + " cells/mL") +
              tr("배양 용기", L.label + " " + L.n + "개") +
              tr("용기당 부피", vol(L.per) + " mL") +
@@ -1062,8 +1125,14 @@
     return v ? "P" + v : "";
   }
   function fileStamp(){
-    var d = new Date();
-    var date = d.getFullYear() + "_" + pad(d.getMonth()+1) + "_" + pad(d.getDate());
+    var v = ($("i-ttryp").value || "").slice(0, 10);   // YYYY-MM-DD
+    var date;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(v)){
+      date = v.replace(/-/g, "_");
+    } else {
+      var d = new Date();
+      date = d.getFullYear() + "_" + pad(d.getMonth()+1) + "_" + pad(d.getDate());
+    }
     var p = passLabel();
     return (p ? p + "_" : "") + date + "_" + LAST.mm;
   }
@@ -1081,6 +1150,7 @@
   document.addEventListener("input", saveState);
   document.addEventListener("click", saveState);
   loadState();
+  pPaint();
 
   render();
 })();
